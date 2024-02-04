@@ -38,13 +38,12 @@ public class MyDispatcherHandler {
         }
     }
 
-    private Mono<Void> handleRequestWith(ServerRequest request, HandlerFunction handler) {
-        return handler.handle(request)
+    // HandlerFunctionAdapter, RequestMappingHandlerAdapter
+    private Mono<Void> handleRequestWith(ServerRequest request, Object handler) {
+        return ((HandlerFunction<?>) handler).handle(request)
                 .doOnNext(response -> {
-                    if (response instanceof EntityResponse) {
-                        Object body = ((EntityResponse) response).entity();
-                        log.info("Response body: {}", body);
-                    }
+                    Object body = ((EntityResponse) response).entity();
+                    log.info("Response body: {}", body);
                 })
                 .then();
     }

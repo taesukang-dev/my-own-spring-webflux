@@ -11,7 +11,7 @@ public class TestRouter {
     @Bean
     public RouterFunction<?> route() {
         return RouterFunctions.route()
-                .GET("/test", request -> ServerResponse.ok().bodyValue("Hello, World!"))
+                .GET("/test", request -> ServerResponse.ok().bodyValue("Hello, Router!"))
                 .build();
     }
 }
