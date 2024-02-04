@@ -24,10 +24,11 @@ import java.util.Set;
 @Configuration
 public class MyRequestMappingHandlerMapping implements MyHandlerMapping{
 
-    // mapping registry
+    // mappingRegistry 에 handler 를 저장
     private Map<Object, Set<Method>> mappingRegistry = new HashMap<>();
 
-    // initHandlerMethods
+    // AbstractHandlerMethodMapping.initHandlerMethods 에 대응
+    // applicationContext 에서 @Controller 를 찾아서 mappingRegistry 에 저장
     public MyRequestMappingHandlerMapping(ApplicationContext applicationContext) {
         String[] beanNames = applicationContext.getBeanNamesForType(Object.class);
         int length = beanNames.length;
@@ -43,15 +44,15 @@ public class MyRequestMappingHandlerMapping implements MyHandlerMapping{
                 }
 
                 if (beanType != null && isHandler(beanType)) {
-                    // AbstractHandlerMethodMapping, detectHandlerMethods
+                    // AbstractHandlerMethodMapping, detectHandlerMethods 애 댜웅
                     Class<?> userClass = ClassUtils.getUserClass(beanType);
                     Set<Method> methods = MethodIntrospector.selectMethods(userClass, (ReflectionUtils.MethodFilter) (method) -> {
-                        // RequestMappingHandlerMapping, getMappingforMethod
-                        // 다른 annotation -> requestMapping 으로 변경
+                        // RequestMappingHandlerMapping, getMappingforMethod 에 대응
+                        // 다른 annotation 또한 mapping 이 필요하면 GetMapping -> requestMapping 으로 변경
                         return AnnotatedElementUtils.hasAnnotation(method, GetMapping.class);
                     });
 
-                    // registerHandlerMethod
+                    // AbstractHandlerMethodMapping, registerHandlerMethod 에 대응
                     Object bean = applicationContext.getBean(beanName);
                     mappingRegistry.put(bean, methods);
                 }
@@ -61,13 +62,15 @@ public class MyRequestMappingHandlerMapping implements MyHandlerMapping{
 
     @Override
     public Mono<Object> getHandler(ServerRequest request) {
-        // AbstractHandlerMethodMapping, getHandlerInternal
+        // AbstractHandlerMethodMapping, getHandlerInternal 에 대응
         // {lookupHandlerMethod, createHandlerMethod}
         for (Map.Entry<Object, Set<Method>> entry : mappingRegistry.entrySet()) {
             Object bean = entry.getKey();
             Set<Method> methods = entry.getValue();
             for (Method method : methods) {
                 if (matches(request, method)) {
+                    // HandlerFunction을 생성하고 Mono 로 reutnr, MyDispatcherHandler.handle 에서 lazy evaluation
+                    // handle 메소드는 ServerRequest 를 받아 invokeMethod 를 실행
                     return Mono.just((HandlerFunction<ServerResponse>) request1 -> invokeMethod(bean, method, request1));
                 }
             }

@@ -8,6 +8,8 @@ import org.springframework.mock.http.server.reactive.MockServerHttpRequest;
 import org.springframework.mock.web.server.MockServerWebExchange;
 import org.springframework.web.reactive.function.server.HandlerStrategies;
 import org.springframework.web.reactive.function.server.ServerRequest;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 
 @SpringBootTest
@@ -17,14 +19,17 @@ class MyDispatcherHandlerTest {
     ApplicationContext applicationContext;
 
     @Test
-    void routerfunction() {
+    void functional() {
         ServerRequest request = ServerRequest.create(MockServerWebExchange
                                                         .from(MockServerHttpRequest.get("/test").build())
                                                         , HandlerStrategies.withDefaults().messageReaders());
 
-        new MyDispatcherHandler(applicationContext)
-                .handle(request)
-                .subscribe();
+        Mono<Void> result = new MyDispatcherHandler(applicationContext)
+                .handle(request);
+
+        StepVerifier.create(result)
+                .expectSubscription()
+                .verifyComplete();
     }
 
     @Test
@@ -33,9 +38,12 @@ class MyDispatcherHandlerTest {
                                                         .from(MockServerHttpRequest.get("/test2").build())
                                                         , HandlerStrategies.withDefaults().messageReaders());
 
-        new MyDispatcherHandler(applicationContext)
-                .handle(request)
-                .subscribe();
+        Mono<Void> result = new MyDispatcherHandler(applicationContext)
+                .handle(request);
+
+        StepVerifier.create(result)
+                .expectSubscription()
+                .verifyComplete();
     }
 
 }
